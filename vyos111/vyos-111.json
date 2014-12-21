@@ -1,0 +1,97 @@
+{
+  "variables": {
+    "version": "",
+    "cloud_token": "",
+    "base_username": "kotetsu",
+    "base_password": "kotetsu",
+    "disk_size": 10140
+  },
+  "builders": [
+    {
+      "type": "virtualbox-iso",
+      "boot_wait": "30s",
+      
+      "guest_os_type": "Linux26_64",
+      
+      "iso_checksum": "6115f10c604f749bf2493a5313aaf53c5213bf74",
+      "iso_checksum_type": "sha1",
+      "iso_url": "vyos-1.1.1-amd64.iso",
+      
+      "shutdown_command": "echo 'halt -p' > /tmp/shutdown.sh; echo 'vagrant'|sudo -S sh '/tmp/shutdown.sh'",
+      "ssh_password": "{{user `base_username`}}",
+      "ssh_username": "{{user `base_password`}}",
+      "ssh_wait_timeout": "600s",
+      
+      "boot_command": [
+        "vyos<enter><wait>",
+        "vyos<enter><wait>",
+        "install system<enter><wait>",
+        "<enter><wait>",
+        "<enter><wait>",
+        "<enter><wait>",
+        "Yes<enter><wait>",
+        "<enter><wait10>",
+        "<wait10>",
+        "<wait10>",
+        "<enter><wait>",
+        "vyos<enter><wait>",
+        "vyos<enter><wait>",
+        "<enter><wait10>",
+        "sudo sed -i 's/reboot -d -f -i/eject -m cdrom\\n\\treboot -d -f -i/' /etc/init.d/reboot<enter><wait>",
+        "reboot<enter><wait>",
+        "Yes<enter><wait10>",
+        "<wait10>",
+        "<wait10>",
+        "<wait10>",
+        "<wait10>",
+        "vyos<enter><wait>",
+        "vyos<enter><wait>",
+        "configure<enter><wait>",
+        "delete system console<enter><wait>",
+        "set interface ethernet eth0 address dhcp<enter><wait>",
+        "set system login user {{user `base_username`}} authentication plaintext-password {{user `base_password`}}<enter><wait>",
+        "set system login user {{user `base_username`}} level admin<enter><wait>",
+        "set service ssh<enter><wait>",
+        "commit<enter><wait>",
+        "save<enter><wait>",
+        "exit<enter><wait>",
+        "reboot<enter><wait>",
+        "Yes<enter><wait10>",
+        "<wait10>",
+        "<wait10>",
+        "<wait10>",
+        "<wait10>"
+      ],
+      "vboxmanage": [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "256"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "1"
+        ]
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "override": {
+        "virtualbox-iso": {
+          "scripts": [
+            "scripts/base.sh",
+            "scripts/virtualbox.sh",
+            "scripts/cleanup.sh",
+            "scripts/zerodisk.sh"
+          ]
+        }
+      },
+      "type": "shell"
+    }
+  ]
+}
+

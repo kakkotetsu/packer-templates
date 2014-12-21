@@ -1,0 +1,110 @@
+{
+  "variables": {
+    "product": "vsrx",
+    "junos_release": "12.1",
+    "junos_version": "X47-D10.4",
+    "suffix": "domestic",
+    "box_version": "0.1.3",
+    "box_version_description": "User variables, interfaces and file + shell provisioners",
+    "virtualbox_boot_wait": "60s",
+    "output_path": "./builds",
+    "root_password": "P@ssw0rd",
+    "additional_user": "kotetsu",
+    "additional_password": "P@ssw0rd",
+    "mgmt_ip": "192.168.101.70/24",
+    "virtualbox_nic3_network":  "intnet",
+    "virtualbox_nic4_network":  "intnet",
+    "virtualbox_nic5_network":  "intnet",
+    "virtualbox_nic6_network":  "intnet",
+    "virtualbox_nic7_network":  "intnet",
+    "virtualbox_nic8_network":  "intnet"
+  },
+  "builders": [
+    {
+      "type": "virtualbox-ovf",
+      "boot_wait": "{{user `virtualbox_boot_wait`}}",
+      "boot_command": [
+        "root<enter><wait5>",
+        "chown -R root:wheel /cf/root<enter><wait10>",
+        "chown -R root:wheel /cf/etc<enter><wait10>",
+        "sysctl -w net.inet.ip.mcast_ttl=64<enter><wait5>",
+        "cli<enter><wait><wait>",
+        "conf<enter><wait>",
+        "set system services netconf ssh<enter><wait>",
+        "set system root-authentication plain-text-password<enter><wait>",
+        "{{user `root_password`}}<enter>{{user `root_password`}}<enter><wait>",
+        "set system services ssh root-login allow<enter><wait>",
+        "set system login user {{user `additional_user`}} class super-user<enter><wait>",
+        "set system login user {{user `additional_user`}} authentication plain-text-password<enter><wait>",
+        "{{user `additional_password`}}<enter>{{user `additional_password`}}<enter><wait>",
+        "set interfaces ge-0/0/0 unit 0 family inet dhcp<enter><wait>",
+        "set security zones security-zone untrust interfaces ge-0/0/0.0 host-inbound-traffic system-services ping<enter><wait>",
+        "set interfaces ge-0/0/1 unit 0 family inet address {{user `mgmt_ip`}}<enter><wait>",
+        "set security zones security-zone untrust interfaces ge-0/0/1.0 host-inbound-traffic system-services ping<enter><wait>",
+        "set security zones security-zone untrust interfaces ge-0/0/1.0 host-inbound-traffic system-services ssh<enter><wait>",
+        "set security zones security-zone untrust interfaces ge-0/0/1.0 host-inbound-traffic system-services netconf<enter><wait>",
+        "commit and-quit<enter><wait10>",
+        "exit<enter><wait>"
+      ],
+      "guest_additions_mode": "disable",
+      "source_path": "junos-{{user `product`}}-{{user `junos_release`}}{{user `junos_version`}}-{{user `suffix`}}.ovf",
+      "ssh_username": "root",
+      "ssh_password": "P@ssw0rd",
+      "ssh_wait_timeout": "5m",
+      "shutdown_command": "echo 'shutdown -p now' > shutdown.sh; chmod 755 shutdown.sh; sh shutdown.sh",
+      "vboxmanage": [
+         ["modifyvm", "{{.Name}}", "--memory", "2048"],
+         ["modifyvm", "{{.Name}}", "--cpus", "2"],
+         ["modifyvm", "{{.Name}}", "--nictype1", "virtio"],
+         ["modifyvm", "{{.Name}}", "--nic1", "nat"],
+         ["modifyvm", "{{.Name}}", "--nicpromisc1", "allow-all"],
+         ["modifyvm", "{{.Name}}", "--nictype2", "virtio"],
+         ["modifyvm", "{{.Name}}", "--nic2", "hostonly"],
+         ["modifyvm", "{{.Name}}", "--nicpromisc2", "allow-all"],
+         ["modifyvm", "{{.Name}}", "--hostonlyadapter2", "VirtualBox Host-Only Ethernet Adapter"],
+         ["modifyvm", "{{.Name}}", "--nictype3", "virtio"],
+         ["modifyvm", "{{.Name}}", "--nic3", "{{user `virtualbox_nic3_network`}}"],
+         ["modifyvm", "{{.Name}}", "--nicpromisc3", "allow-all"],
+         ["modifyvm", "{{.Name}}", "--nictype4", "virtio"],
+         ["modifyvm", "{{.Name}}", "--nic4", "{{user `virtualbox_nic4_network`}}"],
+         ["modifyvm", "{{.Name}}", "--nicpromisc4", "allow-all"],
+         ["modifyvm", "{{.Name}}", "--nictype5", "virtio"],
+         ["modifyvm", "{{.Name}}", "--nic5", "{{user `virtualbox_nic5_network`}}"],
+         ["modifyvm", "{{.Name}}", "--nicpromisc5", "allow-all"],
+         ["modifyvm", "{{.Name}}", "--nictype6", "virtio"],
+         ["modifyvm", "{{.Name}}", "--nic6", "{{user `virtualbox_nic6_network`}}"],
+         ["modifyvm", "{{.Name}}", "--nicpromisc6", "allow-all"],
+         ["modifyvm", "{{.Name}}", "--nictype7", "virtio"],
+         ["modifyvm", "{{.Name}}", "--nic7", "{{user `virtualbox_nic7_network`}}"],
+         ["modifyvm", "{{.Name}}", "--nicpromisc7", "allow-all"],
+         ["modifyvm", "{{.Name}}", "--nictype8", "virtio"],
+         ["modifyvm", "{{.Name}}", "--nic8", "{{user `virtualbox_nic8_network`}}"],
+         ["modifyvm", "{{.Name}}", "--nicpromisc8", "allow-all"],
+         ["modifyvm", "{{.Name}}", "--boot1", "disk"],
+         ["modifyvm", "{{.Name}}", "--uart1", "0x3F8", "4"],
+         ["modifyvm", "{{.Name}}", "--uartmode1", "disconnected"]
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "file",
+      "source": "scripts/rc.custom",
+      "destination": "/cf/etc/rc.custom"
+    },
+    {
+      "type": "file",
+      "source": "scripts/loader.conf",
+      "destination": "/cf/boot/loader.conf"
+    },
+    {
+      "type": "shell",
+
+      "execute_command": "sh {{.Path}}",
+      "inline": [
+        "chmod 0755 /cf/etc/rc.custom",
+        "ls -la /cf/etc/rc.custom"
+      ]
+    }
+  ]
+}
