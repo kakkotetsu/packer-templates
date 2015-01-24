@@ -1,0 +1,72 @@
+{
+  "variables": {
+    "username": "kotetsu",
+    "password": "kotetsu"
+  },
+  "builders": [
+    {
+      "type": "virtualbox-iso",
+      "name": "rhel-server-5.5-x86_64-virtualbox",
+      "guest_os_type": "RedHat_64",
+      "headless": "false",
+      
+      "iso_url": "rhel-server-5.5-x86_64-dvd.iso",
+      "iso_checksum_type": "md5",
+      "iso_checksum": "f3119f883257ef9041234feda2f1cad0",
+      
+      "ssh_username": "{{user `username`}}",
+      "ssh_password": "{{user `password`}}",
+      "ssh_wait_timeout": "600s",
+      
+      "http_directory": "http",
+      "boot_command": [
+        "linux text ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ks.cfg<enter><wait>"
+      ],
+      "boot_wait": "10s",
+      
+      "disk_size": 10140,
+      
+      "shutdown_command": "echo '/sbin/halt -h -p' > shutdown.sh; echo 'kotetsu'|sudo -S sh 'shutdown.sh'",
+      "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
+      "virtualbox_version_file": ".vbox_version",
+      "vboxmanage": [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "512"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "1"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--ioapic",
+          "on"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--pae",
+          "on"
+        ]
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts": [
+        "./scripts/base.sh",
+        "./scripts/virtualbox.sh",
+        "./scripts/cleanup.sh",
+        "./scripts/zerodisk.sh"
+      ],
+      "execute_command": "echo 'kotetsu'|sudo -S sh '{{.Path}}'"
+    }
+  ]
+}
