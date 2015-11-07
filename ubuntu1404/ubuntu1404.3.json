@@ -1,0 +1,47 @@
+{
+    "variables": {
+        "base_username": "kotetsu",
+        "base_password": "kotetsu",
+        "disk_size": 20480
+    },
+    "builders":[
+        {
+            "type": "virtualbox-iso",
+            "guest_os_type": "Ubuntu_64",
+            "output_directory": "output-ubuntu1404-3-tmp",
+            "vm_name": "ubuntu1404-3",
+
+            "iso_url": "ubuntu-14.04.3-server-amd64.iso",
+            "iso_checksum_type": "md5",
+            "iso_checksum": "9e5fecc94b3925bededed0fdca1bd417",
+
+            "ssh_username": "{{user `base_username`}}",
+            "ssh_password": "{{user `base_password`}}",
+            "ssh_wait_timeout": "30m",
+            "shutdown_command": "echo {{user `base_password`}} | sudo -S sh -c 'shutdown -P now'",
+            "headless": false,
+            "guest_additions_mode": "disable",
+            "hard_drive_interface": "sata",
+
+            "http_directory": "./",
+            "boot_wait": "10s",
+            "boot_command":[
+                "<esc></esc><esc><enter><wait>",
+                "/install/vmlinuz noapic ",
+                "auto=true url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/scripts/preseed.cfg ",
+                "hostname={{ .Name }} ",
+                "fb=false debconf/frontend=noninteractive ",
+                "initrd=/install/initrd.gz -- ",
+                "<enter><wait>"
+            ]
+        }
+    ],
+    "provisioners": [{
+        "type": "shell",
+        "execute_command": "echo {{user `base_password`}} | sudo -S bash '{{.Path}}'",
+        "scripts": [
+            "scripts/disable_udev_persistent_net.sh",
+            "scripts/enable_serial_ttyS0.sh"
+        ]
+    }]
+}
