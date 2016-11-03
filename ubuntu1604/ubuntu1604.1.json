@@ -1,0 +1,88 @@
+{
+    "variables": {
+        "base_username": "kotetsu",
+        "base_password": "kotetsu",
+        "disk_size": "20480"
+    },
+    "builders":[
+        {
+            "type": "virtualbox-iso",
+            "guest_os_type": "Ubuntu_64",
+            "output_directory": "output-ubuntu1604",
+            "vm_name": "ubuntu1604",
+
+            "iso_url": "ubuntu-16.04.1-server-amd64.iso",
+            "iso_checksum_type": "sha256",
+            "iso_checksum": "29a8b9009509b39d542ecb229787cdf48f05e739a932289de9e9858d7c487c80",
+
+            "ssh_username": "{{user `base_username`}}",
+            "ssh_password": "{{user `base_password`}}",
+            "ssh_wait_timeout": "30m",
+            "shutdown_command": "echo {{user `base_password`}} | sudo -S sh -c 'shutdown -P now'",
+            "headless": false,
+            "guest_additions_mode": "disable",
+            "hard_drive_interface": "sata",
+
+            "http_directory": "./",
+            "boot_wait": "10s",
+            "boot_command":[
+                "<enter><wait><f6><esc><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+                "/install/vmlinuz noapic ",
+                "auto-install/enable=true ",
+                "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/scripts/preseed.cfg ",
+                "hostname={{ .Name }} ",
+                "fb=false ",
+                "debconf/frontend=noninteractive ",
+                "initrd=/install/initrd.gz -- ",
+                "<enter><wait>"
+            ]
+        },
+        {
+            "type": "qemu",
+            "output_directory": "output-ubuntu1604-qemu-tmp",
+            "vm_name": "ubuntu1604",
+
+            "iso_url": "ubuntu-16.04.1-server-amd64.iso",
+            "iso_checksum_type": "sha256",
+            "iso_checksum": "29a8b9009509b39d542ecb229787cdf48f05e739a932289de9e9858d7c487c80",
+
+            "ssh_username": "{{user `base_username`}}",
+            "ssh_password": "{{user `base_password`}}",
+            "ssh_wait_timeout": "30m",
+            "shutdown_command": "echo {{user `base_password`}} | sudo -S sh -c 'shutdown -P now'",
+            "headless": true,
+            "format": "qcow2",
+            "accelerator": "kvm",
+            "net_device": "virtio-net",
+            "disk_interface": "virtio",
+
+            "http_directory": "./",
+            "boot_wait": "10s",
+            "boot_command":[
+                "<enter><wait><f6><esc><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+                "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+                "/install/vmlinuz noapic ",
+                "auto-install/enable=true ",
+                "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/scripts/preseed.cfg ",
+                "hostname={{ .Name }} ",
+                "fb=false ",
+                "debconf/frontend=noninteractive ",
+                "initrd=/install/initrd.gz -- ",
+                "<enter><wait>"
+            ]
+        }
+    ],
+    "provisioners": [{
+        "type": "shell",
+        "execute_command": "echo {{user `base_password`}} | sudo -S bash '{{.Path}}'",
+        "scripts": [
+            "scripts/disable_udev_persistent_net.sh",
+            "scripts/enable_serial_ttyS0.sh"
+        ]
+    }]
+}
