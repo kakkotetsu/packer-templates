@@ -1,0 +1,47 @@
+{
+  "variables": {
+    "base_username": "kotetsu",
+    "base_password": "kotetsu",
+    "disk_size": "20480"
+  },
+  "builders": [
+    {
+      "type": "qemu",
+      "name": "centos-74",
+      "headless": "true",
+      "output_directory": "output-centos74-qemu-tmp",
+
+      "iso_url": "CentOS-7-x86_64-Minimal-1708.iso",
+      "iso_checksum": "5848f2fd31c7acf3811ad88eaca6f4aa",
+      "iso_checksum_type": "md5",
+      
+      "ssh_username": "{{user `base_username`}}",
+      "ssh_password": "{{user `base_password`}}",
+      "ssh_wait_timeout": "600s",
+
+      "format": "qcow2",
+      "accelerator": "kvm",
+      "net_device": "virtio-net",
+      "disk_interface": "virtio",
+      
+      "boot_command": [
+        "<esc><wait>",
+        "linux ks=http://{{.HTTPIP}}:{{.HTTPPort}}/ks.cfg ",
+        "<enter><wait>"
+      ],
+      "boot_wait": "25s",
+      "shutdown_command": "sudo systemctl poweroff",
+      "http_directory": "./http_directory"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "script": "./scripts/centos.sh"
+    },
+    {
+      "type": "shell",
+      "script": "./scripts/compact.sh"
+    }
+  ]
+}
