@@ -1,0 +1,51 @@
+{
+    "variables": {
+        "base_username": "kotetsu",
+        "base_password": "kotetsu",
+        "disk_size": "20480"
+    },
+    "builders":[
+        {
+            "type": "qemu",
+            "output_directory": "output-ubuntu1804-qemu-tmp",
+            "vm_name": "ubuntu1804",
+
+            "iso_url": "ubuntu-18.04-server-amd64.iso",
+            "iso_checksum_type": "sha256",
+            "iso_checksum": "a7f5c7b0cdd0e9560d78f1e47660e066353bb8a79eb78d1fc3f4ea62a07e6cbc",
+
+            "ssh_username": "{{user `base_username`}}",
+            "ssh_password": "{{user `base_password`}}",
+            "ssh_wait_timeout": "30m",
+            "shutdown_command": "echo {{user `base_password`}} | sudo -S sh -c 'shutdown -P now'",
+            "headless": true,
+            "format": "qcow2",
+            "accelerator": "kvm",
+            "net_device": "virtio-net",
+            "disk_interface": "virtio",
+
+            "http_directory": "./",
+            "boot_wait": "10s",
+            "boot_command":[
+                "<esc><wait>",
+                "<esc><wait>",
+                "<enter><wait>",
+                "/install/vmlinuz noapic ",
+                "auto-install/enable=true ",
+                "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/scripts/preseed.cfg ",
+                "hostname={{ .Name }} ",
+                "fb=false ",
+                "debconf/frontend=noninteractive ",
+                "initrd=/install/initrd.gz -- ",
+                "<enter><wait>"
+            ]
+        }
+    ],
+    "provisioners": [{
+        "type": "shell",
+        "execute_command": "echo {{user `base_password`}} | sudo -S bash '{{.Path}}'",
+        "scripts": [
+            "scripts/enable_serial_ttyS0.sh"
+        ]
+    }]
+}
